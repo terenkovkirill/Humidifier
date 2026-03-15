@@ -8,14 +8,14 @@
 #define DHTPIN D2
 #define DHTTYPE DHT22
 
-const int HUMIDIFIER_PIN   = D5;
+const int HUMIDIFIER_PIN = D5;
 const int WATER_SENSOR_PIN = A0;
 
 const int WATER_DRY_THRESHOLD = 500;
 
 ESP8266WiFiMulti wifiMulti;
 
-#define BOT_TOKEN "YOUR_BOT_TOKEN"
+#define BOT_TOKEN ""
 
 WiFiClientSecure secured_client;
 UniversalTelegramBot bot(BOT_TOKEN, secured_client);
@@ -31,8 +31,8 @@ enum ControlMode {
 ControlMode mode = MODE_AUTO;
 
 float currentTemp = 0.0;
-float currentHum  = 0.0;
-float targetHum   = 50.0;
+float currentHum = 0.0;
+float targetHum = 50.0;
 
 bool humidifierIsOn = false;
 bool waterLow = false;
@@ -74,8 +74,8 @@ void setup() {
 
   WiFi.mode(WIFI_STA);
 
-  wifiMulti.addAP("A34 пользователя Kir", "Vasiliy7");
-  wifiMulti.addAP("MGTS_GPON_975A", "7UYexxGG");
+  wifiMulti.addAP("", "");
+  wifiMulti.addAP("", "");
 
   while (wifiMulti.run() != WL_CONNECTED) {
     delay(500);
@@ -150,8 +150,7 @@ void readSensorsAndControl() {
 
     if (!humidifierIsOn && currentHum < targetHum - HYSTERESIS) {
       setHumidifier(true);
-    } 
-    else if (humidifierIsOn && currentHum > targetHum + HYSTERESIS) {
+    } else if (humidifierIsOn && currentHum > targetHum + HYSTERESIS) {
       setHumidifier(false);
     }
   }
@@ -161,14 +160,14 @@ void handleTelegram() {
   int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
 
   while (numNewMessages) {
-
     for (int i = 0; i < numNewMessages; i++) {
-
-      String chat_id  = bot.messages[i].chat_id;
-      String text     = bot.messages[i].text;
+      String chat_id = bot.messages[i].chat_id;
+      String text = bot.messages[i].text;
       String fromName = bot.messages[i].from_name;
 
-      if (fromName == "") fromName = "User";
+      if (fromName == "") {
+        fromName = "User";
+      }
 
       lastChatId = chat_id;
 
@@ -180,9 +179,7 @@ void handleTelegram() {
 }
 
 void processCommand(const String& chat_id, const String& text, const String& fromName) {
-
   if (text == "/start") {
-
     String msg = "Humidifier control\n\n";
     msg += "/on\n";
     msg += "/off\n";
@@ -190,33 +187,23 @@ void processCommand(const String& chat_id, const String& text, const String& fro
     msg += "/setXX";
 
     bot.sendMessage(chat_id, msg, "");
-  }
-
-  else if (text == "/on") {
+  } else if (text == "/on") {
     mode = MODE_FORCE_ON;
     setHumidifier(true);
     bot.sendMessage(chat_id, "Humidifier ON", "");
-  }
-
-  else if (text == "/off") {
+  } else if (text == "/off") {
     mode = MODE_FORCE_OFF;
     setHumidifier(false);
     bot.sendMessage(chat_id, "Humidifier OFF", "");
-  }
-
-  else if (text == "/status") {
+  } else if (text == "/status") {
     sendStatus(chat_id);
-  }
-
-  else if (text.startsWith("/set")) {
-
+  } else if (text.startsWith("/set")) {
     String valueStr = text.substring(4);
     valueStr.trim();
 
     float value = valueStr.toFloat();
 
     if (value >= 20.0 && value <= 80.0) {
-
       targetHum = value;
       mode = MODE_AUTO;
 
@@ -226,15 +213,12 @@ void processCommand(const String& chat_id, const String& text, const String& fro
 
       bot.sendMessage(chat_id, msg, "");
     }
-  }
-
-  else {
+  } else {
     bot.sendMessage(chat_id, "Unknown command", "");
   }
 }
 
 void sendStatus(const String& chat_id) {
-
   String msg = "Status\n";
 
   msg += "Temp: ";
